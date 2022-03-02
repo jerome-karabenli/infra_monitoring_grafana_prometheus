@@ -1,0 +1,77 @@
+groups:
+- name: Container
+  rules:
+  ########## SEVERITY = CRITICAL #############
+  # CONTAINER DOWN
+  - alert: ContainerKilled
+    expr: count(time() - container_last_seen{ job="cadvisor"} > 31) by (name)
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      title: "Service not seen in last 20s"
+      description: "A container has disappeared\n  VALUE = {{ $labels.name }}"
+
+  # CONTAINER CPU USAGE TOO HIGH
+  - alert: ContainerCpuUsage
+    expr: sum(rate(container_cpu_usage_seconds_total{job="cadvisor", id != "/"}[5m]) * 100) by (name) >= 50
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      title: Container CPU usage (instance {{ $labels.instance }})
+      description: "Container CPU usage is above 50%\n  VALUE = {{ $value }}"
+
+  # CONTAINER MEMORY USAGE TOO HIGH
+  - alert: ContainerMemoryUsage
+    expr: sum(avg_over_time(container_memory_usage_bytes{name!="", job="cadvisor"}[5m]) / 6217076736) by (name) * 100 >= 60
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      title: Container Memory usage (instance {{ $labels.instance }})
+      description: "Container Memory usage is above 60%\n  VALUE = {{ $value }} \n CONTAINER = {{ $labels.name }}"
+
+  ######### SEVERITY == WARNING ############
+
+  # CONTAINER CPU USAGE TOO HIGH
+  - alert: ContainerCpuUsage 
+    expr: sum(rate(container_cpu_usage_seconds_total{job="cadvisor", id != "/"}[5m]) * 100) by (name) >= 25 < 50
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      title: Container CPU usage (instance {{ $labels.instance }})
+      description: "Container CPU usage is above 25%\n  VALUE = {{ $value }}"
+
+  # CONTAINER MEMORY USAGE TOO HIGH
+  - alert: ContainerMemoryUsage
+    expr: sum(avg_over_time(container_memory_usage_bytes{name!="", job="cadvisor"}[5m]) / 6217076736) by (name) * 100 >= 40
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      title: Container Memory usage (instance {{ $labels.instance }})
+      description: "Container Memory usage is above 40%\n  VALUE = {{ $value }} \n CONTAINER = {{ $labels.name }}"
+
+
+  ############ SEVERITY == INFO ################
+  # CONTAINER CPU USAGE TOO HIGH
+  - alert: ContainerCpuUsage
+    expr: sum(rate(container_cpu_usage_seconds_total{job="cadvisor", id != "/"}[5m]) * 100) by (name) >= 10
+    for: 5m
+    labels:
+      severity: info
+    annotations:
+      title: Container CPU usage (instance {{ $labels.instance }})
+      description: "Container CPU usage is above 10%\n  VALUE = {{ $value }}"
+
+  # CONTAINER MEMORY USAGE TOO HIGH
+  - alert: ContainerMemoryUsage
+    expr: sum(avg_over_time(container_memory_usage_bytes{name!="", job="cadvisor"}[5m]) / 6217076736) by (name) * 100 >= 20
+    for: 5m
+    labels:
+      severity: warning 
+    annotations:
+      title: Container Memory usage (instance {{ $labels.instance }})
+      description: "Container Memory usage is above 20%\n  VALUE = {{ $value }} \n CONTAINER = {{ $labels.name }}"

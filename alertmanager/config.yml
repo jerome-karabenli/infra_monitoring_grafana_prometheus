@@ -1,0 +1,30 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: ''
+
+route:
+  receiver: 'slack'
+  repeat_interval: 1h
+
+receivers:
+- name: 'slack'
+  slack_configs:
+  - channel: ''
+    send_resolved: false
+    icon_emoji: ":alertmanager:"
+    title: |-
+      {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+      {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+        {{" "}}
+      {{- end }}
+    text: >-
+      {{ range .Alerts -}}
+        *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`            {{- if eq .Labels.severity "warning" -}}
+            :danger2:
+        {{- else if eq .Labels.severity "critical" -}}
+            :fire:
+        {{- else -}}
+            :information2:
+        {{- end -}}{{ end }}
+      *Description:* {{ .Annotations.description }}{{"\n"}}
+      {{ end }}
